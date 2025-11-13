@@ -167,28 +167,6 @@ python3 facetrace.py image.jpg --open --top 10
 
 ---
 
-## 💳 Credits
-
-### Free Tier
-- ✅ **3 free searches** for every new account
-- ✅ No credit card required
-- ✅ Email verification only
-
-### Need More Searches?
-- 💰 **Pay-as-you-go** pricing
-- 🪙 Pay with cryptocurrency (BTC, ETH, USDT, LTC, and more)
-- 📦 Minimum purchase: 10 credits
-- ⚡ Instant credit activation
-
-**Add credits:**
-```bash
-python3 facetrace.py --add-credits 10
-python3 facetrace.py --add-credits 25
-python3 facetrace.py --add-credits 100
-```
-
----
-
 ## 🔬 How It Works
 
 FaceTrace uses cloud-based facial recognition technology:
