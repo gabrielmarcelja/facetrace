@@ -67,9 +67,7 @@ def show_features():
   [cyan]🌐 Multi-Platform[/cyan] - Search across 50+ platforms
   [cyan]🎨 Beautiful CLI[/cyan] - Colorful, intuitive interface
   [cyan]🔒 Secure[/cyan] - Encrypted API communication
-  [cyan]💪 Plug-and-Play[/cyan] - No complex setup required
-
-[bold]🎁 You'll start with 3 free searches to try it out![/bold]"""
+  [cyan]💪 Plug-and-Play[/cyan] - No complex setup required"""
 
     console.print(Panel(features, border_style="green", padding=(1, 2)))
     console.print()
@@ -132,11 +130,11 @@ def run_wizard():
             console.print()
             time.sleep(0.5)
 
-            success = login_user()
+            success = login_user(silent_mode=True)
 
             if not success:
                 console.print()
-                console.print("[yellow]No worries! You can login later with:[/yellow]")
+                console.print("[yellow]You can try again later with:[/yellow]")
                 console.print("[dim]  python3 facetrace.py login[/dim]")
                 return False
         else:
@@ -145,11 +143,11 @@ def run_wizard():
             console.print()
             time.sleep(0.5)
 
-            success = register_user()
+            success = register_user(silent_mode=True)
 
             if not success:
                 console.print()
-                console.print("[yellow]No worries! You can register later with:[/yellow]")
+                console.print("[yellow]You can try again later with:[/yellow]")
                 console.print("[dim]  python3 facetrace.py register[/dim]")
                 return False
 

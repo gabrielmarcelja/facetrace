@@ -389,8 +389,9 @@ def main():
     """Main entry point"""
     args = parse_args()
 
-    # Run onboarding wizard for first-time users
-    if is_first_time():
+    # Run onboarding wizard for first-time users (only if not already authenticated)
+    from core.config import is_authenticated
+    if is_first_time() and not is_authenticated():
         run_wizard()
         # After wizard, exit gracefully
         sys.exit(0)
