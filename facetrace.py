@@ -25,7 +25,9 @@ Examples:
 import sys
 import argparse
 import webbrowser
+import time
 from pathlib import Path
+from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
 
 # Import core modules
 from core.display import Display
@@ -34,6 +36,7 @@ from core.api_client import FaceTraceAPI, FaceTraceAPIError
 from core.downloader import is_url, download_image, validate_image_size
 from core.utils import export_results, open_in_browser
 from core.config import get_email
+from core.onboarding import is_first_time, run_wizard
 
 
 def parse_args():
@@ -129,6 +132,67 @@ Examples:
     return parser.parse_args()
 
 
+def poll_search_with_progress(api: FaceTraceAPI, search_id: str):
+    """
+    Poll search status and show real-time progress bar
+
+    Args:
+        api: FaceTraceAPI instance
+        search_id: Search ID from async search
+
+    Returns:
+        Tuple of (results, remaining_credits)
+    """
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[bold blue]{task.description}"),
+        BarColumn(complete_style="green", finished_style="bold green"),
+        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+        TextColumn("•"),
+        TextColumn("[cyan]{task.fields[found]} found"),
+        TimeElapsedColumn(),
+        transient=False
+    ) as progress:
+
+        task = progress.add_task(
+            "Searching across platforms...",
+            total=100,
+            found=0
+        )
+
+        max_attempts = 120  # 2 minutes max
+        attempt = 0
+
+        while attempt < max_attempts:
+            try:
+                status_data = api.get_search_status(search_id)
+
+                status = status_data.get('status')
+                current_progress = status_data.get('progress', 0)
+                found = status_data.get('found', 0)
+
+                # Update progress bar
+                progress.update(task, completed=current_progress, found=found)
+
+                if status == 'complete':
+                    # Search complete!
+                    progress.update(task, completed=100, description="[bold green]✓ Search complete!")
+                    results = status_data.get('results', [])
+                    remaining_credits = status_data.get('remaining_credits', 0)
+                    return results, remaining_credits
+
+                # Wait before next poll
+                time.sleep(2)
+                attempt += 1
+
+            except FaceTraceAPIError as e:
+                Display.error(f"Progress check failed: {str(e)}")
+                raise
+
+        # Timeout
+        raise FaceTraceAPIError("Search timed out after 2 minutes")
+
+
 def handle_balance():
     """Handle --balance command"""
     check_authentication()
@@ -219,20 +283,22 @@ def handle_search(image_path_or_url: str, args):
 
         Display.success("Image downloaded")
 
-        # Search using API (sends URL to backend)
-        Display.searching("Searching for matches...")
-
+        # Start async search
         api = FaceTraceAPI()
 
         try:
-            result = api.search_face(
+            # Start search
+            Display.info("Starting face search...")
+            start_result = api.search_face_async(
                 image_url=image_path_or_url,
                 min_score=args.min_score,
                 platform_filter=args.platform
             )
 
-            all_results = result.get('results', [])
-            remaining_credits = result.get('remaining_credits', 0)
+            search_id = start_result.get('search_id')
+
+            # Poll for progress with progress bar
+            all_results, remaining_credits = poll_search_with_progress(api, search_id)
 
         except FaceTraceAPIError as e:
             if "Insufficient credits" in str(e):
@@ -268,20 +334,22 @@ def handle_search(image_path_or_url: str, args):
             Display.error("Image too large. Maximum size is 10MB")
             sys.exit(1)
 
-        # Search using API (uploads file to backend)
-        Display.searching("Searching for matches...")
-
+        # Start async search
         api = FaceTraceAPI()
 
         try:
-            result = api.search_face(
+            # Start search
+            Display.info("Starting face search...")
+            start_result = api.search_face_async(
                 image_data=image_data,
                 min_score=args.min_score,
                 platform_filter=args.platform
             )
 
-            all_results = result.get('results', [])
-            remaining_credits = result.get('remaining_credits', 0)
+            search_id = start_result.get('search_id')
+
+            # Poll for progress with progress bar
+            all_results, remaining_credits = poll_search_with_progress(api, search_id)
 
         except FaceTraceAPIError as e:
             if "Insufficient credits" in str(e):
@@ -320,6 +388,12 @@ def handle_search(image_path_or_url: str, args):
 def main():
     """Main entry point"""
     args = parse_args()
+
+    # Run onboarding wizard for first-time users
+    if is_first_time():
+        run_wizard()
+        # After wizard, exit gracefully
+        sys.exit(0)
 
     try:
         # Handle authentication commands

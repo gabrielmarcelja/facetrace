@@ -244,3 +244,107 @@ class FaceTraceAPI:
             return self._handle_response(response)
         except requests.exceptions.RequestException as e:
             raise FaceTraceAPIError(f"Network error: {str(e)}")
+
+    def search_face_async(
+        self,
+        image_data: bytes = None,
+        image_url: str = None,
+        min_score: int = 70,
+        platform_filter: str = None
+    ) -> Dict:
+        """
+        Start async face search (returns search_id immediately)
+
+        Args:
+            image_data: Image file bytes (for file uploads)
+            image_url: Image URL (for URL-based searches)
+            min_score: Minimum similarity score (70-100)
+            platform_filter: Optional platform filter
+
+        Returns:
+            Dict with search_id
+
+        Raises:
+            FaceTraceAPIError: If search start fails
+        """
+        if not self.api_key:
+            raise FaceTraceAPIError("Not authenticated. Please login first.")
+
+        url = f"{self.base_url}/search/face-async.php"
+        headers = {'Authorization': f'Bearer {self.api_key}'}
+
+        try:
+            if image_data:
+                # File upload
+                files = {'image': ('image.jpg', image_data, 'image/jpeg')}
+                data = {
+                    'min_score': min_score
+                }
+
+                if platform_filter:
+                    data['platform_filter'] = platform_filter
+
+                response = requests.post(
+                    url,
+                    files=files,
+                    data=data,
+                    headers=headers,
+                    timeout=60
+                )
+            elif image_url:
+                # URL-based search
+                data = {
+                    'image_url': image_url,
+                    'min_score': min_score
+                }
+
+                if platform_filter:
+                    data['platform_filter'] = platform_filter
+
+                response = requests.post(
+                    url,
+                    data=data,
+                    headers=headers,
+                    timeout=60
+                )
+            else:
+                raise FaceTraceAPIError("Either image_data or image_url must be provided")
+
+            return self._handle_response(response)
+
+        except requests.exceptions.Timeout:
+            raise FaceTraceAPIError("Request timeout. Please try again.")
+        except requests.exceptions.RequestException as e:
+            raise FaceTraceAPIError(f"Network error: {str(e)}")
+
+    def get_search_status(self, search_id: str) -> Dict:
+        """
+        Get status of an async search
+
+        Args:
+            search_id: Search ID from search_face_async
+
+        Returns:
+            Dict with status, progress, and results (when complete)
+
+        Raises:
+            FaceTraceAPIError: If status check fails
+        """
+        if not self.api_key:
+            raise FaceTraceAPIError("Not authenticated. Please login first.")
+
+        url = f"{self.base_url}/search/status.php?search_id={search_id}"
+
+        try:
+            response = requests.get(
+                url,
+                headers=self._get_headers(),
+                timeout=15
+            )
+
+            return self._handle_response(response)
+
+        except requests.exceptions.Timeout:
+            raise FaceTraceAPIError("Status check timeout.")
+        except requests.exceptions.RequestException as e:
+            raise FaceTraceAPIError(f"Network error: {str(e)}")
