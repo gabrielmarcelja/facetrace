@@ -15,7 +15,6 @@ FaceTrace is a powerful command-line tool for reverse face search using advanced
 - 🎯 **High Accuracy** - Advanced facial recognition technology
 - 🌐 **Multi-Platform** - Instagram, Facebook, Twitter, OnlyFans, TikTok, LinkedIn, and more
 - 🎨 **Beautiful CLI** - Colorful terminal output with progress indicators
-- 💳 **Credit System** - 3 free searches, pay-as-you-go with cryptocurrency
 - 🔒 **Secure** - Email verification and encrypted API communication
 - 💪 **Plug-and-Play** - No complex setup, just clone and run
 
