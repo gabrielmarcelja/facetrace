@@ -1,0 +1,8 @@
+# FaceTrace - Reverse Face Search CLI
+# Minimal dependencies for plug-and-play experience
+
+# HTTP requests
+requests>=2.31.0
+
+# Beautiful terminal output
+rich>=13.0.0
