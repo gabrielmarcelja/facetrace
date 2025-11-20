@@ -69,10 +69,19 @@ def register_user(silent_mode=False):
 
             Display.success("Account created successfully!")
             print()
-            Display.info("✓ Verification email sent")
-            print()
-            Display.warning("IMPORTANT: Check your email and click the verification link")
-            Display.info("After verification, run: facetrace login")
+
+            # Show message from backend (handles both verified and unverified cases)
+            backend_message = result.get('message', '')
+
+            if result.get('email_verified', False):
+                # Email auto-verified (SMTP not configured)
+                Display.info("✓ You can now login with your credentials")
+            else:
+                # Email verification required
+                Display.info("✓ Verification email sent")
+                print()
+                Display.warning("IMPORTANT: Check your email and click the verification link")
+                Display.info("After verification, run: facetrace login")
 
             return True
 
